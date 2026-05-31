@@ -21,7 +21,7 @@ using namespace std;
 //-------------------------------------------------------------------------------------
 #include "../MyNetworkUtils/FormatUtils.h"
 #pragma comment(lib, "MyNetworkUtils.lib")
-//-------------------------------------------------------------------------------------1
+//-------------------------------------------------------------------------------------
 
 void main()
 {
@@ -103,7 +103,15 @@ void main()
 		if (iResult > 0)
 			cout << "Bytes received: " << iResult << "Message: " << recv_buffer << endl;
 		else if (iResult == 0) cout << "Connection closed" << endl;
-		else cout << "Receive failed with error" << WSAGetLastError() << endl;
+		//*************************************************************************
+		else
+		{
+			// Ուղղված է՝ կանչում ենք ստատիկ գրադարանի ֆունկցիան ռուսերեն թարգմանության համար
+			DWORD dwRecvError = WSAGetLastError();
+			cout << "Receive failed with error: " << dwRecvError << " - " << FormatLastError(dwRecvError) << endl;
+		}
+		//else cout << "Receive failed with error" << WSAGetLastError() << endl;
+		//*************************************************************************
 
 	} while (iResult > 0);
 

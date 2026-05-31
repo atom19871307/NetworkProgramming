@@ -1,9 +1,7 @@
 ﻿ // Server
-
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif 
-
 #include<iostream>
 #include<Windows.h>
 #include<WinSock2.h>
@@ -12,7 +10,6 @@
 using namespace std;
 
 #pragma comment(lib, "WS2_32.lib")
-
 #define MTU 1500
 //--------------------------------------------------------------------------------
 #include "../MyNetworkUtils/FormatUtils.h"
@@ -31,7 +28,7 @@ void main()
 		return;
 	}
 
-	//2) Определяем параметры подключения:
+	//2) Параметры подключения:
 	addrinfo hints;
 	addrinfo* target;
 
@@ -50,7 +47,7 @@ void main()
 		return;
 	}
 
-	//3) Создаем серверного сокета, Создание серверного сокета, который он будет постоянно прослушивать:
+	//3)Создание серверного сокета, который он будет постоянно прослушивать:
 	SOCKET listen_socket =
 		socket(target->ai_family, target->ai_socktype, target->ai_protocol);
 	if (listen_socket == INVALID_SOCKET)
@@ -101,31 +98,30 @@ void main()
 	do
 	{
 		iReceivedBytes = recv(client_socket, recv_buffer, MTU, 0);
-		////Функция recv() - Receive ожидает получение данных по указанному сокету, и возвращает количество полученных Байт.
+		//Функция recv() - Receive ожидает получение данных по указанному сокету, и возвращает количество полученных Байт.
 		if (iReceivedBytes > 0)
 		{
 			cout << "Received " << iReceivedBytes << " " << recv_buffer << endl;
 			iSentBytes = send(client_socket, send_buffer, strlen(send_buffer), 0);
-			if (iSentBytes == SOCKET_ERROR) cout << "Send failed with error: \t" << WSAGetLastError() << endl;
+			if (iSentBytes == SOCKET_ERROR)	cout << "Send failed with error:\t" << WSAGetLastError() << endl;
 			else cout << iSentBytes << " Bytes sent" << endl;
 		}
 		else if (iReceivedBytes == 0) cout << "Connection closing..." << endl;
-		///////////////////////////////////////////////////////////////////////////////
+		//*********************************************************************
 		else
 		{
+			// Այստեղ կանչում ենք քո ստատիկ գրադարանի ֆունկցիան՝ 10054-ը թարգմանելու համար
 			DWORD dwRecvError = WSAGetLastError();
-			// Թվի կողքը կանչում ենք ֆունկցիան, որ Windows-ից բերի ռուսերեն տեքստը
 			cout << "Receive failed with error: " << dwRecvError << " - " << FormatLastError(dwRecvError) << endl;
-		}		
-			//else cout << "Receive failed with error: " << WSAGetLastError() << endl;
-
-		///////////////////////////////////////////////////////////////////////
+		}
+		// else cout << "Receive failed with error: " << WSAGetLastError() << endl;
+		//*********************************************************************
+		
 	} while (iReceivedBytes > 0);
 
 	//8) Разрываем TCP-соединение:
 	iResult = shutdown(client_socket, SD_BOTH);
-	if (iResult == SOCKET_ERROR)
-		cout << "shutdown failed with error: \t" << WSAGetLastError() << endl;
+	if (iResult == SOCKET_ERROR)cout << "shutdown failed with error:\t" << WSAGetLastError() << endl;
 
 	//9) Освобождаем ресурсы, занятиые WinSOCK:
 	closesocket(listen_socket);
