@@ -18,6 +18,11 @@ using namespace std;
 
 #define MTU 1500	//Maximum Transfer Unit - Максимально-возможный размер Ethernet-кадра
 
+//-------------------------------------------------------------------------------------
+#include "../MyNetworkUtils/FormatUtils.h"
+#pragma comment(lib, "MyNetworkUtils.lib")
+//-------------------------------------------------------------------------------------1
+
 void main()
 {
 	setlocale(LC_ALL, "");
@@ -67,7 +72,8 @@ void main()
 	freeaddrinfo(target);
 	if (iResult == SOCKET_ERROR)
 	{
-		cout << "Error " << dwError << ":\t";
+		// ЭКРАНИՆ ԿՏՊՎԻ՝ Error 10061: Подключение не установлено, так как конечный компьютер отверг запрос...
+		cout << "Error " << dwError << ":\t" << FormatLastError(dwError) << endl;
 		//	WSAGetLastError() в обязатенльном порядке должна быть вызвана непосредственно 
 		//	после вывоза функции, которая потенциально может выполниться с ошибкой.
 		cout << "Unable to connect to server" << endl;
