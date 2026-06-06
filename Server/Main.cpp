@@ -15,8 +15,7 @@ using namespace std;
 #define MTU 1500
 
 // 1) Использовать 'FormatLastError.lib' в Сервере
-#include "../MyNetworkUtils/FormatUtils.h"
-#pragma comment(lib, "MyNetworkUtils.lib")
+#include "FormatUtils.h"
 
 void main()
 {

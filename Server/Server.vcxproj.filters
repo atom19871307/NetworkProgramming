@@ -18,5 +18,16 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FormatUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\MyNetworkUtils\x64\Debug\MyNetworkUtils.tlog\MyNetworkUtils.lastbuildstate" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="FormatUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

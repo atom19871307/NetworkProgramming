@@ -123,7 +123,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="FormatUtils.cpp" />
     <ClCompile Include="Main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\MyNetworkUtils\x64\Debug\MyNetworkUtils.tlog\MyNetworkUtils.lastbuildstate" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="FormatUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

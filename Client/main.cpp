@@ -14,8 +14,7 @@ using namespace std;
 #pragma comment(lib, "WS2_32.lib")
 #define MTU 1500
 
-#include "../MyNetworkUtils/FormatUtils.h"
-#pragma comment(lib, "MyNetworkUtils.lib")
+#include "../Server/FormatUtils.h"
 
 void main()
 {
