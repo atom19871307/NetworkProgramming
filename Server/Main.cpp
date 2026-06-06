@@ -1,25 +1,29 @@
-﻿//Server
-//#define _WINSOCK_DEPRECATED_NO_WARNINGS
+﻿// Server
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#endif
+#endif 
 
-#include<iostream>
-#include<Windows.h>
-#include<WinSock2.h>
-#include<WS2tcpip.h>
-#include<iphlpapi.h>
+#include <iostream>
+#include <Windows.h>
+#include <WinSock2.h>
+#include <WS2tcpip.h>
+#include <iphlpapi.h>
+
 using namespace std;
 
 #pragma comment(lib, "WS2_32.lib")
+#define MTU 1500
 
-#define MTU	1500
+// 1) Использовать 'FormatLastError.lib' в Сервере
+#include "../MyNetworkUtils/FormatUtils.h"
+#pragma comment(lib, "MyNetworkUtils.lib")
 
 void main()
 {
 	setlocale(LC_ALL, "");
 	cout << "SERVER" << endl;
-	//1) Инициализация WinSOCK:
+
+	// Инициализация WinSOCK
 	WSADATA wsaData;
 	INT iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0)
@@ -28,100 +32,108 @@ void main()
 		return;
 	}
 
-	//2) Параметры подключения:
+	// Параметры подключения
 	addrinfo hints;
 	addrinfo* target;
-
 	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_INET;
+	hints.ai_family = AF_INET;			// TCP/IPv4
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
-	hints.ai_flags = AI_PASSIVE;	//Соединение будет работать в режиме 'LISTENING';
+	hints.ai_flags = AI_PASSIVE;
 
 	iResult = getaddrinfo(NULL, "27015", &hints, &target);
 	if (iResult != 0)
 	{
-		cout << "getaddrinfo() failed with error: " << iResult << endl;
-		freeaddrinfo(target);
+		cout << "getaddrinfo() failed with error " << iResult << endl;
 		WSACleanup();
 		return;
 	}
 
-	//3) Создание серверного сокета, который он будет постоянно прослушивать:
-	SOCKET listen_socket =
-		socket(target->ai_family, target->ai_socktype, target->ai_protocol);
+	// Создание серверного сокета
+	SOCKET listen_socket = socket(target->ai_family, target->ai_socktype, target->ai_protocol);
 	if (listen_socket == INVALID_SOCKET)
 	{
-		cout << "SOCKET creation failed with error: " << WSAGetLastError() << endl;
+		DWORD dwError = WSAGetLastError();
+		cout << "Socket failed with error: " << dwError << " - " << FormatLastError(dwError) << endl;
 		freeaddrinfo(target);
 		WSACleanup();
 		return;
 	}
 
-	//4) Привязываем сокет к интерфейсу и порту:
+	// Привязка сокета
 	iResult = bind(listen_socket, target->ai_addr, target->ai_addrlen);
 	if (iResult != 0)
 	{
-		cout << "bind failed with error: " << WSAGetLastError() << endl;
+		DWORD dwError = WSAGetLastError();
+		cout << "bind failed with error: " << dwError << " - " << FormatLastError(dwError) << endl;
 		freeaddrinfo(target);
 		closesocket(listen_socket);
 		WSACleanup();
 		return;
 	}
 
-	//5) Запускаем прослушивание порта:
-	if (listen(listen_socket, 1) == SOCKET_ERROR)	//1 - Максимальное количество одновременно подключенных клиентов
+	freeaddrinfo(target);
+
+	// Запуск прослушивания
+	if (listen(listen_socket, 1) == SOCKET_ERROR)
 	{
-		cout << "Listen failed with error: " << WSAGetLastError() << endl;
+		DWORD dwError = WSAGetLastError();
+		cout << "Listen failed with error: " << dwError << " - " << FormatLastError(dwError) << endl;
 		closesocket(listen_socket);
-		freeaddrinfo(target);
 		WSACleanup();
 		return;
 	}
 
-	//6) Принимаем подключение от клиента
+	cout << "Waiting for client connection..." << endl;
+
+	// 2) При подключении клиента, Сервер должен отображать его IP-адрес и порт
 	SOCKADDR_IN client_address;
 	INT client_address_len = sizeof(client_address);
+
 	SOCKET client_socket = accept(listen_socket, (SOCKADDR*)&client_address, &client_address_len);
 	if (client_socket == INVALID_SOCKET)
 	{
-		cout << "Accept failed with error: " << WSAGetLastError() << endl;
+		DWORD dwError = WSAGetLastError();
+		cout << "Accept failed with error: " << dwError << " - " << FormatLastError(dwError) << endl;
 		closesocket(listen_socket);
-		freeaddrinfo(target);
 		WSACleanup();
 		return;
 	}
-	CHAR sz_client_address[32];
-	cout << inet_ntop(AF_INET, &client_address.sin_addr, sz_client_address, 32) << ":" << ntohs(client_address.sin_port) << endl;
 
-	//7) Получаем данные от клиента:
+	// Преобразуем IP и Port в читаемый вид
+	CHAR sz_client_ip[32] = {};
+	inet_ntop(AF_INET, &client_address.sin_addr, sz_client_ip, sizeof(sz_client_ip));
+	USHORT client_port = ntohs(client_address.sin_port);
+
+	cout << ">> Client connected from IP: " << sz_client_ip << " on Port: " << client_port << " <<" << endl;
+
+	// Обмен данными
+	CHAR recv_buffer[MTU] = {};
 	CHAR send_buffer[MTU] = "Hello client";
 	INT iReceivedBytes = 0;
-	INT iSentBytes = 0;
+
 	do
 	{
-		CHAR recv_buffer[MTU] = {};
-		cout << &recv_buffer << endl;
 		iReceivedBytes = recv(client_socket, recv_buffer, MTU, 0);
-		//Функция recv() - Receive ожидает получение данных по указанному сокету, и возвращает количество полученных Байт.
 		if (iReceivedBytes > 0)
 		{
-			//sprintf(send_buffer, "\x1b[32m%s\x1b[0m", recv_buffer);
-			cout << "Received " << iReceivedBytes << " " << recv_buffer << endl;
-			iSentBytes = send(client_socket, recv_buffer, strlen(recv_buffer), 0);
-			if (iSentBytes == SOCKET_ERROR)	cout << "Send failed with error:\t" << WSAGetLastError() << endl;
-			else cout << iSentBytes << " Bytes sent" << endl;
+			cout << "Received: " << recv_buffer << " (" << iReceivedBytes << " bytes)" << endl;
+			send(client_socket, send_buffer, (int)strlen(send_buffer), 0);
 		}
-		else if (iReceivedBytes == 0) cout << "Connection closing..." << endl;
-		else cout << "Receive failed with error: " << WSAGetLastError() << endl;
+		else if (iReceivedBytes == 0)
+		{
+			cout << "Connection closing..." << endl;
+		}
+		else
+		{
+			DWORD dwRecvError = WSAGetLastError();
+			cout << "Receive failed with error: " << dwRecvError << " - " << FormatLastError(dwRecvError) << endl;
+		}
 	} while (iReceivedBytes > 0);
 
-	//8) Разрываем TCP-соединение:
-	iResult = shutdown(client_socket, SD_BOTH);
-	if (iResult != SOCKET_ERROR)cout << "shutdown failed with error:\t" << WSAGetLastError() << endl;
-
-	//9) Освобождаем ресурсы, занятиые WinSOCK:
+	// Завершение работы
+	shutdown(client_socket, SD_BOTH);
+	closesocket(client_socket);
 	closesocket(listen_socket);
-	freeaddrinfo(target);
 	WSACleanup();
 }
