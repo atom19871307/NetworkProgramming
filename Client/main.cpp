@@ -20,13 +20,13 @@ using namespace std;
 
 #define MTU 1500	//Maximum Transfer Unit - Максимально-возможный размер Ethernet-кадра
 
-
 void main()
 {
 	setlocale(LC_ALL, "");
 	cout << "CLIENT" << endl;
 	DWORD dwError = 0;
 	CHAR szError[256] = {};
+
 	//1) Инициализация WinSOCK:
 	WSAData wsaData;
 	int iResult = 0;
@@ -56,8 +56,7 @@ void main()
 	//3) Создаем сокет:
 	//SOCKET - тип данных;
 	//socket() - это функция;
-	SOCKET connect_socket =
-		socket(target->ai_family, target->ai_socktype, target->ai_protocol);
+	SOCKET connect_socket = socket(target->ai_family, target->ai_socktype, target->ai_protocol);
 	dwError = WSAGetLastError();
 	if (connect_socket == INVALID_SOCKET)
 	{
@@ -89,7 +88,9 @@ void main()
 	//freeaddrinfo(target);
 
 	//5) Отправка:
-	CHAR send_buffer[MTU] = "Hello Server";
+	CHAR send_buffer[MTU] = "Привет Server";
+	do
+	{ 
 	iResult = send(connect_socket, send_buffer, strlen(send_buffer), 0);
 	dwError = WSAGetLastError();
 	if (iResult == SOCKET_ERROR)
@@ -103,7 +104,7 @@ void main()
 
 	//6) Получение данных:
 	CHAR recv_buffer[MTU] = {};
-	do
+	//do
 	{
 		iResult = recv(connect_socket, recv_buffer, MTU, 0);
 		dwError = WSAGetLastError();
@@ -112,9 +113,16 @@ void main()
 		else if (iResult == 0) cout << "Connection closed" << endl;
 		else cout << "Receive failed with " << FormatLastError(dwError,szError) << endl;
 
-	} while (iResult > 0);
+	} //while (iResult > 0);
+	ZeroMemory(send_buffer, MTU);
+	ZeroMemory(recv_buffer, MTU);
+	cout << "Введите сообщение: ";
+	SetConsoleCP(1251);
+	cin.getline(send_buffer, MTU);
+	SetConsoleCP(866);
+	} while (strcmp(send_buffer, "exit") != 0);//https://legacy.cplusplus.com/reference/cstring/strcmp/
 
-	iResult = shutdown(connect_socket, SD_BOTH);	//Закрываем сокет на получение и отправку данных (разрываем TCP-соединение):
+	iResult = shutdown(connect_socket, SD_BOTH);//Закрываем сокет на получение и отправку данных (разрываем TCP-соединение):
 	if (iResult == SOCKET_ERROR)
 		cout << "Shutdown failed with " << FormatLastError(WSAGetLastError(), szError) << endl;
 	//7) Освобождаем ресурсы WinSOCK:
